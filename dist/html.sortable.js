@@ -368,17 +368,18 @@ var _attached = function(element) {
   return !!element.parentNode;
 };
 /**
- * Convert HTML string into DOM element
+ * Convert HTML string into DOM element.
  * @param {Element|string} html
+ * @param {string} tagname
  * @returns {Element}
  */
-var _html2element = function(html) {
+var _html2element = function(html, tagName) {
   if (typeof html !== 'string') {
     return html;
   }
-  var div = document.createElement('div');
-  div.innerHTML	= html;
-  return div.firstChild;
+  var parentElement = document.createElement(tagName);
+  parentElement.innerHTML	= html;
+  return parentElement.firstChild;
 };
 /**
  * Insert before target
@@ -436,6 +437,17 @@ var _dispatchEventOnConnected = function(sortableElement, event) {
     }
   });
 };
+
+/**
+ * Tests if an element matches a given selector. Comparable to jQuery's $(el).is('.my-class')
+ * @param {el} DOM element
+ * @param {selector} selector test against the element
+ * @retirms {boolean}
+ */
+var _matches = function(el, selector) {
+  return (el.matches || el.matchesSelector || el.msMatchesSelector || el.mozMatchesSelector || el.webkitMatchesSelector || el.oMatchesSelector).call(el, selector);
+};
+
 /*
  * Public sortable object
  * @param {Array|NodeList} sortableElements
@@ -496,7 +508,7 @@ var sortable = function(sortableElements, options) {
         /^ul|ol$/i.test(sortableElement.tagName) ? 'li' : 'div'
       );
     }
-    placeholder = _html2element(placeholder);
+    placeholder = _html2element(placeholder, sortableElement.tagName);
     placeholder.classList.add.apply(
       placeholder.classList,
       options.placeholderClass.split(' ')
@@ -538,7 +550,10 @@ var sortable = function(sortableElements, options) {
     // Handle drag events on draggable items
     _on(items, 'dragstart', function(e) {
       e.stopImmediatePropagation();
-
+      if(options.handle && !_matches(e.target, options.handle)){
+        return;
+      }
+      
       if (options.dragImage) {
         _attachGhost(e, {
           draggedItem: options.dragImage,
@@ -685,6 +700,7 @@ sortable.enable = function(sortableElement) {
 sortable.disable = function(sortableElement) {
   _disableSortable(sortableElement);
 };
+
 
 
 return sortable;
